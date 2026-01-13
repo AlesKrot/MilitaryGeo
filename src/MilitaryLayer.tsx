@@ -9,31 +9,13 @@ import axios from "axios";
 // Dokumentacja osmtogeojson: https://github.com/tyrasd/osmtogeojson
 import osmtogeojson from "osmtogeojson";
 
-// ---- TYPY ----
-type MilitaryType =
-    | "barracks"
-    | "naval_base"
-    | "airfield"
-    | "training_area"
-    | "range"
-    | "primary"
-    | "office"
-    | "danger_area"
-    | "shelter"
-    | "bunker";
+// import { MILITARY_TYPES, MILITARY_LABELS } from "../constants/military";
+import type { MilitaryType, GeoJSONData } from "../types/military";
 
 // Typ danych GeoJSON. Poczytaj o GeoJSON: https://geojson.org/
 // type GeoJSONData = GeoJSOND.FeatureCollection;
 
-type GeoJSONData = {
-    type: "FeatureCollection";
-    features: Array<{
-        type: "Feature";
-        geometry: any;
-        properties: any;
-    }>;
-};
-
+// comment
 // ---- LISTA TYPÓW ----
 const MILITARY_TYPES: MilitaryType[] = [
     "barracks",
