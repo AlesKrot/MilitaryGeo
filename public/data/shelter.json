@@ -1,0 +1,205 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "way",
+        "id": 149601316,
+        "tags": {
+          "addr:city": "Łężyce",
+          "addr:housenumber": "17",
+          "addr:postcode": "84-207",
+          "addr:street": "Limbowa",
+          "building": "yes",
+          "description": "ruiny niemieckiego radaru typu Jagdschloss (FuG404) z okresu II W.Ś.",
+          "disused": "yes",
+          "military": "shelter",
+          "name": "ruiny radaru z okresu II W. Ś.",
+          "source": "bing",
+          "source:addr": "wejherowo.e-mapa.net",
+          "source:building": "EGiB",
+          "tourism": "attraction"
+        },
+        "nodes": [
+          1625557438,
+          1625557432,
+          1625557436,
+          12279470517,
+          12279470516,
+          1625557440,
+          1625557438
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              18.375833,
+              54.517475
+            ],
+            [
+              18.375796,
+              54.517375
+            ],
+            [
+              18.375587,
+              54.517402
+            ],
+            [
+              18.375598,
+              54.517431
+            ],
+            [
+              18.375576,
+              54.517434
+            ],
+            [
+              18.375605,
+              54.517505
+            ],
+            [
+              18.375833,
+              54.517475
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "way",
+        "id": 479370087,
+        "tags": {
+          "building": "yes",
+          "building:levels": "-1",
+          "description": "ruiny schronu dalmierza baterii flak 105 mm pochodzącej z okresu II Wojny Światowej",
+          "disused": "yes",
+          "ele": "161",
+          "historic": "ruins",
+          "military": "shelter",
+          "name": "Ruiny schronu dalmierza",
+          "tourism": "attraction"
+        },
+        "nodes": [
+          4724857807,
+          4724857808,
+          4724857809,
+          4724857810,
+          4724857811,
+          4724857812,
+          4724857807
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              18.392009,
+              54.5323548
+            ],
+            [
+              18.3920842,
+              54.5323559
+            ],
+            [
+              18.3921208,
+              54.5323253
+            ],
+            [
+              18.3920883,
+              54.5322875
+            ],
+            [
+              18.392013,
+              54.5322887
+            ],
+            [
+              18.3919765,
+              54.5323206
+            ],
+            [
+              18.392009,
+              54.5323548
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "way",
+        "id": 479373112,
+        "tags": {
+          "building": "yes",
+          "building:levels": "1",
+          "description": "Ruiny schronu dalmierza baterii flak kalibru 105 oraz 128 mm z okresu II Wojny Światowej",
+          "disused": "yes",
+          "historic": "ruins",
+          "military": "shelter",
+          "name": "Ruiny schronu dalmierza",
+          "source": "bing",
+          "tourism": "attraction"
+        },
+        "nodes": [
+          4724886641,
+          4724886642,
+          4724886643,
+          4724886644,
+          4724886645,
+          4724886646,
+          4724886647,
+          4724886648,
+          4724886641
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              18.5504945,
+              54.4687042
+            ],
+            [
+              18.5505564,
+              54.468753
+            ],
+            [
+              18.5505698,
+              54.4687476
+            ],
+            [
+              18.5506054,
+              54.4687517
+            ],
+            [
+              18.5506311,
+              54.4687412
+            ],
+            [
+              18.5506375,
+              54.4687205
+            ],
+            [
+              18.5506545,
+              54.468713
+            ],
+            [
+              18.5505885,
+              54.4686621
+            ],
+            [
+              18.5504945,
+              54.4687042
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
