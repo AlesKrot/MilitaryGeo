@@ -49,11 +49,49 @@ export default function MilitaryOSMLayer() {
         }
     };
 
+    // ---- CACHE (localStorage) ----
+    const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+    const makeCacheKey = (types: MilitaryType[]) => {
+        const typeKey = [...types].sort().join(",");
+        // Scope: country-level (PL). If later we add bbox, extend the key.
+        return `overpass:PL:${typeKey}`;
+    };
+
+    const loadCache = (key: string): GeoJSONData | null => {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj || typeof obj !== "object") return null;
+            if (Date.now() - obj.timestamp > CACHE_TTL_MS) return null;
+            return obj.data as GeoJSONData;
+        } catch {
+            return null;
+        }
+    };
+
+    const saveCache = (key: string, data: GeoJSONData) => {
+        try {
+            localStorage.setItem(key, JSON.stringify({ timestamp: Date.now(), data }));
+        } catch {
+            // Ignore storage errors (e.g., quota exceeded)
+        }
+    };
+
     // ---- FUNKCJA POBIERANIA DANYCH ----
     const fetchData = async (types: MilitaryType[]) => {
         setLoading(true);
         setData(null);
         setError(null);
+
+        const cacheKey = makeCacheKey(types);
+        const cached = loadCache(cacheKey);
+        if (cached) {
+            setData(cached);
+            setLoading(false);
+            return;
+        }
 
         const typeConditions = types.map(type =>
             `way["military"="${type}"](area.a);\n            relation["military"="${type}"](area.a);`
@@ -78,7 +116,8 @@ export default function MilitaryOSMLayer() {
             const geojson = osmtogeojson(res.data);
             console.log("GeoJSON:", geojson);
 
-            setData(geojson);
+            setData(geojson as GeoJSONData);
+            saveCache(cacheKey, geojson as GeoJSONData);
         } catch (e) {
             console.error("Błąd Overpass:", e);
             setData(null);
