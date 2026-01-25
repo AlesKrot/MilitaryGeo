@@ -1,0 +1,40 @@
+.style-controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    width: 80vw;
+    max-width: 200px;
+    font-size: 14px;
+}
+
+.style-controls__title {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.style-controls__group {
+    margin-bottom: 8px;
+}
+
+.style-controls__label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.style-controls__color {
+    width: 100%;
+    height: 32px;
+    cursor: pointer;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+}
+
+.style-controls__slider {
+    width: 100%;
+    cursor: pointer;
+}

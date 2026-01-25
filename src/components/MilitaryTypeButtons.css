@@ -1,0 +1,40 @@
+.type-buttons {
+    position: absolute;
+    top: 10px;
+    left: 60px;
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.type-buttons__label {
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+.type-buttons__button {
+    margin: 2px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #eee;
+    color: #000;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.type-buttons__button--active {
+    background: #c62828;
+    color: #fff;
+    border-color: #922121;
+}
+
+.type-buttons__button--all {
+    font-weight: 700;
+}

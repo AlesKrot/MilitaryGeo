@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 // Dokumentacja react-leaflet:
 // https://react-leaflet.js.org/docs/start-introduction
 import { GeoJSON, useMap } from "react-leaflet";
+import type { GeoJSON as LeafletGeoJSON } from "leaflet";
 // Dokumentacja Axios: https://axios-http.com/docs/intro
 import axios from "axios";
 // Dokumentacja osmtogeojson: https://github.com/tyrasd/osmtogeojson
@@ -11,6 +12,11 @@ import osmtogeojson from "osmtogeojson";
 
 import type { MilitaryType, GeoJSONData } from "./types/militaryTypes";
 import { MILITARY_TYPES, MILITARY_LABELS } from "./constants/militaryConstants";
+import ErrorToast from "./components/ErrorToast";
+import LegendPanel from "./components/LegendPanel";
+import LoadingOverlay from "./components/LoadingOverlay";
+import MilitaryTypeButtons from "./components/MilitaryTypeButtons";
+import StyleControls from "./components/StyleControls";
 
 // ---- KOMPONENT MilitaryOSMLayer ----
 export default function MilitaryOSMLayer() {
@@ -21,10 +27,27 @@ export default function MilitaryOSMLayer() {
     const [fillOpacity, setFillOpacity] = useState<number>(0.45);
     const [lineWeight, setLineWeight] = useState<number>(6);
     const [layerColor, setLayerColor] = useState<string>("#2600FF");
-    const layerRef = useRef<L.GeoJSON | null>(null);
+    const layerRef = useRef<LeafletGeoJSON | null>(null);
     const map = useMap();
 
     const allTypesSelected = MILITARY_TYPES.every(type => selectedTypes.includes(type));
+
+    const handleToggleType = (type: MilitaryType) => {
+        const isActive = selectedTypes.includes(type);
+        if (isActive) {
+            setSelectedTypes(prev => prev.filter(t => t !== type));
+        } else {
+            setSelectedTypes(prev => [...prev, type]);
+        }
+    };
+
+    const handleToggleAll = () => {
+        if (allTypesSelected) {
+            setSelectedTypes(["barracks"]);
+        } else {
+            setSelectedTypes([...MILITARY_TYPES]);
+        }
+    };
 
     // ---- FUNKCJA POBIERANIA DANYCH ----
     const fetchData = async (types: MilitaryType[]) => {
@@ -84,221 +107,30 @@ export default function MilitaryOSMLayer() {
     // ---- RENDER ----
     return (
         <>
-            {/* ---- WIADOMOŚĆ O BŁĘDZIE ---- */}
-            {error && (
-                <div
-                    style={{
-                        position: "fixed",
-                        top: "20px",
-                        right: "20px",
-                        zIndex: 99999,
-                        background: "rgba(220, 53, 69, 0.95)",
-                        color: "white",
-                        padding: "15px 20px",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        maxWidth: "400px",
-                        fontWeight: "bold",
-                    }}
-                >
-                    ❌ {error}
-                </div>
-            )}
-            {/* ---- LOADER ---- */}
+            {error && <ErrorToast message={error} />}
             {loading && (
-                <div
-                    style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100vw",
-                        height: "100vh",
-                        background: "rgba(0,0,0,0.5)",
-                        zIndex: 99999,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "white",
-                        fontSize: "24px",
-                        fontWeight: "bold",
-                    }}
-                >
-                    Ładowanie: {selectedTypes.map(t => MILITARY_LABELS[t]).join(", ")}
-                </div>
+                <LoadingOverlay
+                    text={`Ładowanie: ${selectedTypes.map(t => MILITARY_LABELS[t]).join(", ")}`}
+                />
             )}
-            {/* ---- PRZYCISKI ---- */}
-            <div
-                style={{
-                    position: "absolute",
-                    top: "10px",
-                    left: "60px",
-                    zIndex: 9999,
-                    background: "rgba(255,255,255,0.9)",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                }}
-            >
-                <div style={{ fontWeight: "bold", marginBottom: "6px" }}>
-                    Typ obiektu wojskowego:
-                </div>
-                {MILITARY_TYPES.map((type) => {
-                    const isActive = selectedTypes.includes(type);
-                    return (
-                        <button
-                            key={type}
-                            onClick={() => {
-                                if (isActive) {
-                                    setSelectedTypes(prev => prev.filter(t => t !== type));
-                                } else {
-                                    setSelectedTypes(prev => [...prev, type]);
-                                }
-                            }}
-                            title={MILITARY_LABELS[type] || type}
-                            aria-label={MILITARY_LABELS[type] || type}
-                            style={{
-                                margin: "4px",
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                border: "1px solid #555",
-                                background: isActive ? "#c62828" : "#eee",
-                                color: isActive ? "#fff" : "#000",
-                                cursor: "pointer",
-                            }}
-                        >
-                            {MILITARY_LABELS[type] || type}
-                        </button>
-                    );
-                })}
-                <button
-                    onClick={() => {
-                        if (allTypesSelected) {
-                            setSelectedTypes(["barracks"]);
-                        } else {
-                            setSelectedTypes([...MILITARY_TYPES]);
-                        }
-                    }}
-                    title="Pokaż wszystkie warstwy naraz"
-                    aria-label="Pokaż wszystkie warstwy naraz"
-                    style={{
-                        margin: "4px",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #555",
-                        background: allTypesSelected ? "#c62828" : "#eee",
-                        color: allTypesSelected ? "#fff" : "#000",
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                    }}
-                >
-                    Pokaż wszystkie warstwy naraz
-                </button>
-            </div>
-            {/* ---- Legenda ---- */}
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: "10px",
-                    left: "10px",
-                    zIndex: 9999,
-                    background: "rgba(255,255,255,0.9)",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                    width: "80vw",
-                    maxWidth: "200px",
-                }}
-            >
-                <div style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
-                    Legenda:
-                </div>
-                <div style={{ fontSize: "14px" }}>
-                    <div style={{ marginBottom: "4px" }}>
-                        <strong>Typ:</strong> {selectedTypes.map(t => MILITARY_LABELS[t]).join(", ")}
-                    </div>
-                    <div>
-                        <strong>Liczba obiektów:</strong> {data?.features?.length || 0}
-                    </div>
-                </div>
-            </div>
-            {/* ---- Styl warstwy ---- */}
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: "10px",
-                    right: "10px",
-                    zIndex: 9999,
-                    background: "rgba(255,255,255,0.9)",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                    width: "80vw",
-                    maxWidth: "200px",
-                }}
-                onMouseEnter={() => {
-                    map.dragging?.disable();
-                    map.scrollWheelZoom?.disable();
-                    map.doubleClickZoom?.disable();
-                    map.boxZoom?.disable();
-                }}
-                onMouseLeave={() => {
-                    map.dragging?.enable();
-                    map.scrollWheelZoom?.enable();
-                    map.doubleClickZoom?.enable();
-                    map.boxZoom?.enable();
-                }}
-                onMouseDown={(e) => e.stopPropagation()}
-                onMouseMove={(e) => e.stopPropagation()}
-                onMouseUp={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-                onDoubleClick={(e) => e.stopPropagation()}
-                onWheel={(e) => e.stopPropagation()}
-            >
-                <div style={{ fontWeight: "bold", marginBottom: "8px", fontSize: "14px" }}>
-                    Styl warstwy:
-                </div>
-                <div style={{ fontSize: "14px" }}>
-                    <div style={{ marginBottom: "8px" }}>
-                        <label style={{ display: "block", marginBottom: "4px" }}>
-                            <strong>Kolor:</strong>
-                        </label>
-                        <input
-                            type="color"
-                            value={layerColor}
-                            onChange={(e) => setLayerColor(e.target.value)}
-                            style={{ width: "100%", height: "32px", cursor: "pointer" }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: "8px" }}>
-                        <label style={{ display: "block", marginBottom: "4px" }}>
-                            <strong>Grubość linii:</strong> {lineWeight}
-                        </label>
-                        <input
-                            type="range"
-                            min="1"
-                            max="10"
-                            step="1"
-                            value={lineWeight}
-                            onChange={(e) => setLineWeight(parseInt(e.target.value))}
-                            style={{ width: "100%" }}
-                        />
-                    </div>
-                    <div style={{ marginBottom: "8px" }}>
-                        <label style={{ display: "block", marginBottom: "4px" }}>
-                            <strong>Przejrzystość:</strong> {fillOpacity.toFixed(2)}
-                        </label>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value={fillOpacity}
-                            onChange={(e) => setFillOpacity(parseFloat(e.target.value))}
-                            style={{ width: "100%" }}
-                        />
-                    </div>
-                </div>
-            </div>
+            <MilitaryTypeButtons
+                selectedTypes={selectedTypes}
+                onToggleType={handleToggleType}
+                onToggleAll={handleToggleAll}
+                allTypesSelected={allTypesSelected}
+            />
+            <LegendPanel
+                selectedTypes={selectedTypes}
+                featureCount={data?.features?.length || 0}
+            />
+            <StyleControls
+                layerColor={layerColor}
+                onLayerColorChange={setLayerColor}
+                lineWeight={lineWeight}
+                onLineWeightChange={setLineWeight}
+                fillOpacity={fillOpacity}
+                onFillOpacityChange={setFillOpacity}
+            />
             {/* ---- WARSTWA GEOJSON ---- */}
             {data && (
                 <GeoJSON
