@@ -8,7 +8,8 @@ export type MilitaryType =
     | "office"
     | "danger_area"
     | "shelter"
-    | "bunker";
+    | "bunker"
+    | "all";
 
 export type GeoJSONData = {
     type: "FeatureCollection";
@@ -18,4 +19,3 @@ export type GeoJSONData = {
         properties: any;
     }>;
 };
-
