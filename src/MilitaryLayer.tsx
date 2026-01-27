@@ -27,7 +27,9 @@ export default function MilitaryOSMLayer() {
     const [fillOpacity, setFillOpacity] = useState<number>(0.45);
     const [lineWeight, setLineWeight] = useState<number>(6);
     const [layerColor, setLayerColor] = useState<string>("#2600FF");
+    const [layerVersion, setLayerVersion] = useState(0);
     const layerRef = useRef<LeafletGeoJSON | null>(null);
+    const fetchIdRef = useRef(0);
     const map = useMap();
 
     const allTypesSelected = MILITARY_TYPES.every(type => selectedTypes.includes(type));
@@ -79,50 +81,118 @@ export default function MilitaryOSMLayer() {
         }
     };
 
+    // ---- LOKALNE ZAPISANE DANE (offline) ----
+    const LOCAL_DATA_BASE = "/data";
+
+    const fetchLocalData = async (types: MilitaryType[]): Promise<GeoJSONData | null> => {
+        const collections = await Promise.all(
+            types.map(async type => {
+                try {
+                    const res = await fetch(`${LOCAL_DATA_BASE}/${type}.json`);
+                    if (!res.ok) return null;
+                    const json = await res.json();
+                    if (json?.type === "FeatureCollection" && Array.isArray(json.features)) {
+                        return json as GeoJSONData;
+                    }
+                    return null;
+                } catch {
+                    return null;
+                }
+            })
+        );
+
+        const mergedFeatures = collections.flatMap(collection => collection?.features || []);
+        if (!mergedFeatures.length) return null;
+
+        return {
+            type: "FeatureCollection",
+            features: mergedFeatures,
+        } satisfies GeoJSONData;
+    };
+
     // ---- FUNKCJA POBIERANIA DANYCH ----
     const fetchData = async (types: MilitaryType[]) => {
+        const fetchId = ++fetchIdRef.current; // ensure stale responses do not overwrite new state
         setLoading(true);
         setData(null);
         setError(null);
 
+        const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
+
         const cacheKey = makeCacheKey(types);
         const cached = loadCache(cacheKey);
         if (cached) {
-            setData(cached);
-            setLoading(false);
+            if (fetchId === fetchIdRef.current) {
+                setData(cached);
+                setLayerVersion(v => v + 1);
+                setLoading(false);
+            }
             return;
         }
 
-        const typeConditions = types.map(type =>
-            `way["military"="${type}"](area.a);\n            relation["military"="${type}"](area.a);`
-        ).join('\n            ');
+        let onlineData: GeoJSONData | null = null;
 
-        const query = `
-        [out:json][timeout:60];
-        area["ISO3166-1"="PL"]->.a;
-        (
-            ${typeConditions}
-        );
-        out geom;
-        `;
+        // ---- PROBA ONLINE (Overpass) ----
+        if (isOnline) {
+            const typeConditions = types.map(type =>
+                `way["military"="${type}"](area.a);\n            relation["military"="${type}"](area.a);`
+            ).join('\n            ');
 
-        const requestUrl =
-            "https://overpass.kumi.systems/api/interpreter?data=" +
-            encodeURIComponent(query);
-        try {
-            const res = await axios.get(requestUrl);
-            console.log("Dane z Overpass:", res.data);
+            const query = `
+            [out:json][timeout:60];
+            area["ISO3166-1"="PL"]->.a;
+            (
+                ${typeConditions}
+            );
+            out geom;
+            `;
 
-            const geojson = osmtogeojson(res.data);
-            console.log("GeoJSON:", geojson);
+            const requestUrl =
+                "https://overpass.kumi.systems/api/interpreter?data=" +
+                encodeURIComponent(query);
+            try {
+                const res = await axios.get(requestUrl);
+                console.log("Dane z Overpass:", res.data);
 
-            setData(geojson as GeoJSONData);
-            saveCache(cacheKey, geojson as GeoJSONData);
-        } catch (e) {
-            console.error("Błąd Overpass:", e);
-            setData(null);
-            setError("Nie udało się pobrać danych. Sprawdź połączenie z internetem.");
-        } finally {
+                const geojson = osmtogeojson(res.data);
+                console.log("GeoJSON:", geojson);
+
+                onlineData = geojson as GeoJSONData;
+            } catch (e) {
+                console.error("Błąd Overpass:", e);
+            }
+        }
+
+        // ---- PROBA OFFLINE (lokalne pliki) ----
+        if (!onlineData) {
+            const localData = await fetchLocalData(types);
+            if (localData) {
+                if (fetchId === fetchIdRef.current) {
+                    setData(localData);
+                    setLayerVersion(v => v + 1);
+                    saveCache(cacheKey, localData);
+                    if (isOnline) {
+                        setError("Korzystam z zapisanych plików, bo nie udało się pobrać świeżych danych.");
+                    }
+                    setLoading(false);
+                }
+                return;
+            }
+        }
+
+        if (!onlineData) {
+            if (fetchId === fetchIdRef.current) {
+                setData(null);
+                setError("Nie udało się pobrać danych ani wczytać zapisanych plików.");
+                setLoading(false);
+            }
+            return;
+        }
+
+        if (fetchId === fetchIdRef.current) {
+            setData(onlineData);
+            setLayerVersion(v => v + 1);
+            saveCache(cacheKey, onlineData);
             setLoading(false);
         }
     };
@@ -173,7 +243,7 @@ export default function MilitaryOSMLayer() {
             {/* ---- WARSTWA GEOJSON ---- */}
             {data && (
                 <GeoJSON
-                    key={selectedTypes.join(",")}
+                    key={layerVersion}
                     data={data}
                     ref={layerRef}
                     style={() => ({
